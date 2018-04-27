@@ -8,6 +8,7 @@ import (
 	"strings"
 	"os/exec"
 	"time"
+	"sync"
 )
 
 var numberOfProcesses = flag.Int("n", 5, "number of processes")
@@ -44,9 +45,15 @@ func main() {
 		return s != ""
 	})
 	//commands = []string{"ls", "pwd"}
+	if len(commands) == 0 {
+		fmt.Println("No commands to run\n")
+		os.Exit(1);
+	}
+
 	fmt.Println("Commands to run: \n" + strings.Join(commands, "\n"))
 
 	cmdChan := make(chan string)
+	var wg sync.WaitGroup
 
 	for i:=1; i<=*numberOfProcesses; i++ {
 		go func(cmdChan <- chan string) {
@@ -57,8 +64,8 @@ func main() {
 					fmt.Printf("ERR: %q \n", err)
 				} else {
 					fmt.Printf("OUT: %s \n", string(out))
-
 				}
+				wg.Done()
 				time.Sleep(time.Duration(*sleep) * time.Second)
 			}
 		}(cmdChan)
@@ -66,12 +73,14 @@ func main() {
 
 	for _, cmd := range commands {
 		cmdChan <- cmd
+		wg.Add(1)
 	}
 	for *loop {
 		for _, cmd := range commands {
 			cmdChan <- cmd
+			wg.Add(1)
 		}
 	}
 
-	time.Sleep(1 * time.Hour)
+	wg.Wait()
 }
