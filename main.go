@@ -61,7 +61,7 @@ func main() {
 				fmt.Printf("running command %s \n", cmd)
 				out, err := exec.Command("sh","-c",cmd).Output()
 				if err != nil {
-					fmt.Printf("ERR: %q \n", err)
+					fmt.Printf("ERR: %s - %s \n", err.Error(), string(out))
 				} else {
 					fmt.Printf("OUT: %s \n", string(out))
 				}
